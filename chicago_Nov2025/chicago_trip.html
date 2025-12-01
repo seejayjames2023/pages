@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>🌇Chicago Trip</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 1.5rem;
+            background-color: rgb(228, 213, 197);
+        }
+
+        img {
+            width: 300px;
+            margin: 1rem;
+            border: 2px solid black;
+        }
+
+        .sideText {
+            font-size: smaller;
+            font-weight: bold;
+        }
+
+        nav button {
+            all: unset;
+            cursor: pointer;
+            padding: 0.25em 1em;
+            margin-right: 0.25em;
+            background: #1976d2;
+            color: white;
+            border-radius: 10px;
+            font-size: 20px;
+        }
+
+        nav button:disabled {
+            background: #aaa;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav id="global-nav">
+        <button id="nav-home">🏠</button>
+        <button id="nav-back">👈</button>
+        <button id="nav-forward">👉</button>
+        <button id="nav-random">❔</button>
+        <span id="pageTracker" style="font-size: larger;font-weight:bold">0/0</span>
+    </nav>
+
+
+
+    <!-- PAGE CONTENTS:-->
+    <div class="page" data-page="0">
+        <!-- Paste HTML here. Whatever's in your body tags. Change data-page to match, count from 0. 
+          It's up to YOU to ensure your divs open and close correctly! :) 
+          No Javascript! -->
+        <h1>Chicago CTK Trip!</h1>
+        <strong>This is the home page of my Creative Technologies-inspired trip to Chicago!</strong><br>
+        I visited a bunch of cool places: the Museum of Science and Industry, the Adler Planetarium, the WNDR museum,
+        and a Gem/Mineral museum.<br>
+        Got LOTS of ideas for projects we could make in Creative Technologies 😁<br><br>
+        Obligatory picture of the city skyline...plus the car I rented<br>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_135024.jpg?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_135024.jpg?raw=true"></a>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_135455.jpg?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_135455.jpg?raw=true"></a>
+        <br>
+        If you want to see ALL the pictures and videos from the trip, check out the repo here:<br>
+        <a href="https://drive.google.com/drive/folders/1vEvapaulht57TghsPrCyfZKnwhIZQwlB?usp=sharing" target="_blank">
+            Chicago Trip Media Folder</a>
+        <hr>
+        <div class="sideText">I'm trying a new approach for this web page: a Single Page
+            Application (SPA).<br>
+            Basically, all the content is in chunks of HTML, and all media is linked, so no separate files need to go
+            with the HTML file.<br>
+            When you use the nav buttons, the existing content is hidden and the new content (inside its own div) is
+            loaded.<br>
+            The effect is a site with multiple pages, but there's just one file! Super easy to share.<br></div>
+    </div>
+
+    <div class="page" data-page="1">
+        <h1>Science Museum</h1>
+        Shadow-tracking apps: on the left, butterflies land on your shadow; on the right, your shadow "collects" the
+        falling particles.<br>
+        Pretty straightforward to do these with a camera and some image processing to detect the high-contrast shadow
+        area.<br>
+        Then, use the shadow area as a collider in Unity/Unreal or p5.js with a physics library.<br>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_122804.jpg?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_122804.jpg?raw=true"><br></a>
+    </div>
+
+    <div class="page" data-page="2">
+        <h1>Science Museum</h1>
+        Yes...that is actually a captured German U-Boat from World War II!<br>
+        Plus a cool navigation simulator (with custom controls that would be really fun to build, totally
+        doable).<br>
+        They had a bunch of old-school computers and consoles from the sub on display,
+        plus a virtual Enigma machine with an "encode/decode messages" demo.<br>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_123909.jpg?raw=true"
+            target="_blank">
+            <img src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_123909.jpg?raw=true"
+                style="width:20%"></a>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_124650.jpg?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_124650.jpg?raw=true"></a>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_124410.jpg?raw=true"
+            target="_blank">
+            <img src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_124410.jpg?raw=true"
+                style="width:20%"></a><br>
+    </div>
+
+    <div class="page" data-page="3">
+        <h1>Science Museum</h1>
+        <strong>Photogrammetry!</strong><br>
+        Been really interested in this technique lately, where you take lots of pictures of a real-world object
+        from different overlapping angles, then use software (I'm using RealityScan by Epic, free) to stitch
+        them together and create a 3D model. Note that this differs from 3D scanning with LIDAR or depth cameras, which
+        is better for determining space in larger areas like rooms or buildings (but not as good for texture
+        detail).<br><br>
+        I'm planning to write up the workflow so others can try it too---capture sculpture, props, costumes, etc and use
+        the models in game engines if you want, put them in your portfolio, etc. The results are really impressive
+        (amazing detail and textures) and the process doesn't take long.<br><br>
+        On the trip I found a dozen or so interesting objects to try this on. Here's a music room in a giant "Fairy
+        Castle" exhibit.
+        This was only a few pictures and it was through glass, so it wasn't ideal, but the model is still pretty
+        amazing, check out the video!<br>
+
+        <div id="fairyCastlePhotogrammetry">
+            <style>
+                #fairyCastlePhotogrammetry img {
+                    width: 12%;
+                    margin: 0.25rem;
+                }
+            </style>
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125503.jpg?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125503.jpg?raw=true"></a>
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125506.jpg?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125506.jpg?raw=true"></a>
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125509.jpg?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125509.jpg?raw=true"></a>
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125511.jpg?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125511.jpg?raw=true"></a>
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125513.jpg?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125513.jpg?raw=true"></a>
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125519.jpg?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125519.jpg?raw=true"></a>
+        </div>
+
+        <video width="640" controls>
+            <source
+                src="https://github.com/seejayjames2023/media/raw/refs/heads/main/videos/chicagoTrip/fairy_castle_music_room1.mp4"
+                type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <div class="page" data-page="4">
+        <h1>Science Museum</h1>
+        <strong>VR experience: Cosmic Coaster...not for the faint of stomach!</strong><br><br>
+        I didn't try this here, but I did try a similar roller coaster VR experience at an arcade later in the
+        trip........<br>
+        <strong>and for the first time in VR, I got motion sickness! UGH!</strong><br>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/VR_cosmos_coaster.png?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/VR_cosmos_coaster.png?raw=true"></a><br>
+        So I spent awhile researching about exactly why it happens, and it's not just "VR makes you
+        sick"...there are a LOT of factors that play in, and these are critical for designers.<br><br>
+        The main idea is that motion sickness happens when your brain gets conflicting signals from your eyes, your
+        inner ear (which senses motion), and your proprioceptors (which sense body position).<br>
+        In VR, your eyes see the virtual world moving but the other two systems don't (you're sitting still, or
+        there's simulated motion in the chair but it doesn't match the visuals well). This conflict can lead to nausea,
+        dizziness, headaches, etc. And because it's fully immersive, the effect is FAR stronger than with traditional
+        screens--no reference point for the mind to "ground" itself.<br>
+        <strong>If you find this happening, immediately close your eyes---the visual sense is by far the strongest, so
+            the disconnect will be much less.</strong> Even though the chair might be moving (which is disorienting with
+        eyes closed), the visual disconnect is the main cause. Then stop the ride asap and when you're able, walk around
+        and
+        get fresh air.<br><br>
+        Even though I bailed out before it got too bad, it took awhile before I felt recovered.
+        A real eye-opener (even while shutting my eyes to avoid nausea) about how important good design
+        is for user comfort in VR!<br><br>
+
+        <div class="sideText">To reduce motion sickness in VR experiences, designers can use techniques like:<br>
+            - Minimize rapid or unnatural movements in the virtual environment<br>
+            - Use teleportation or "blink" movement instead of smooth locomotion, especially if it has acceleration<br>
+            - Provide a stable reference frame (like a cockpit or vehicle interior)<br>
+            - Limit the field of view during fast movements (your peripheral vision is very sensitive to motion)<br>
+            - Give users more control like movement speed, turning methods, and whether the camera moves on its own
+            (generally not good, ESPECIALLY rotation)<br>
+            - Ensure high frame rates and low latency to reduce visual lag<br><br>
+        </div>
+    </div>
+
+    <div class="page" data-page="5">
+        <h1>Chicago Trip!</h1>
+        <p>Welcome! This is the first page.</p>
+        <img src="https://picsum.photos/300">
+    </div>
+
+    <div class="page" data-page="6">
+        <h1>Chicago Trip!</h1>
+        <p>Welcome! This is the first page.</p>
+        <img src="https://picsum.photos/300">
+    </div>
+
+    <div class="page" data-page="7">
+        <h1>Chicago Trip!</h1>
+        <p>Welcome! This is the first page.</p>
+        <img src="https://picsum.photos/300">
+    </div>
+
+    <div class="page" data-page="8">
+        <h1>Chicago Trip!</h1>
+        <p>Welcome! This is the first page.</p>
+        <img src="https://picsum.photos/300">
+    </div>
+
+    <div class="page" data-page="9">
+        <h1>Chicago Trip!</h1>
+        <p>Welcome! This is the first page.</p>
+        <img src="https://picsum.photos/300">
+    </div>
+
+    <div class="page" data-page="10">
+        <h1>Chicago Trip!</h1>
+        <p>Welcome! This is the first page.</p>
+        <img src="https://picsum.photos/300">
+    </div>
+
+    <div class="page" data-page="11">
+        <h1>Chicago Trip!</h1>
+        <p>Welcome! This is the first page.</p>
+        <img src="https://picsum.photos/300">
+    </div>
+
+    <nav id="footer-nav" style="margin-top:1rem">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})">👆</button>
+    </nav>
+
+    <script>
+        function initSPA() {
+            const pages = [...document.querySelectorAll('.page')];
+            const total = pages.length;
+
+            function showPage(i) {
+                pages.forEach(p => p.classList.remove('active'));
+                const el = document.querySelector(`.page[data-page="${i}"]`);
+                if (el) el.classList.add('active');
+                window.location.hash = "#" + i;
+                updateNavButtons(i);
+                // May not need the following (nav buttons are at top) but just in case
+                window.scrollTo({ top: 0, behavior: "instant" });
+                document.getElementById("pageTracker").innerHTML = i + "/" + total;
+            }
+
+
+            function updateNavButtons(i) {
+                const total = document.querySelectorAll('.page').length;
+                document.getElementById("nav-back").disabled = (i <= 0);
+                document.getElementById("nav-forward").disabled = (i >= total - 1);
+            }
+
+            function getCurrentIndex() {
+                const hash = window.location.hash.slice(1); // removes #
+                const i = parseInt(hash, 10);
+                return (!isNaN(i) && i >= 0 && i < total) ? i : 0;
+            }
+
+            function back() {
+                const i = getCurrentIndex();
+                if (i > 0) showPage(i - 1);
+            }
+            function forward() {
+                const i = getCurrentIndex();
+                if (i < total - 1) showPage(i + 1);
+            }
+            function random() {
+                if (total > 1) { // ensure no infinite loop
+                    const i = getCurrentIndex();
+                    let r;
+                    do { r = Math.floor(Math.random() * total); }
+                    while (r === i);
+                    showPage(r);
+                }
+            }
+
+            // Nav buttons
+            document.getElementById('nav-home').onclick = () => showPage(0);
+            document.getElementById('nav-back').onclick = back;
+            document.getElementById('nav-forward').onclick = forward;
+            document.getElementById('nav-random').onclick = random;
+
+            // Deep-linking
+            window.addEventListener('hashchange', () => showPage(getCurrentIndex()));
+
+            // Start page
+            showPage(getCurrentIndex());
+        }
+
+        document.addEventListener('DOMContentLoaded', initSPA);
+    </script>
+
+</body>
+
+</html>
