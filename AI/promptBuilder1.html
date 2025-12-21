@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Prompt Contract Builder (v0)</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 16px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        label {
+            display: block;
+            margin: 6px 0;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .row>* {
+            margin: 4px 0;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #fafafa;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+
+        button {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #f4f4f4;
+        }
+
+        small {
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Prompt Contract Builder (v0)</h2>
+    <small>UI → JSON constraints + wrapper → compiled prompt</small>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Task</h3>
+            <label>Task prompt</label>
+            <textarea id="task" placeholder="Describe what you want the assistant to do..."></textarea>
+
+            <label>Context (optional)</label>
+            <textarea id="context" placeholder="Extra context, audience, rubric, constraints... (optional)"></textarea>
+        </div>
+
+        <div class="card">
+            <h3>Controls</h3>
+
+            <label>Preset
+                <select id="preset">
+                    <option value="balanced">Balanced (default)</option>
+                    <option value="strict">Strict format</option>
+                    <option value="teacher">Teacher mode</option>
+                    <option value="creative">Creative mode</option>
+                    <option value="coding">Coding mode</option>
+                </select>
+            </label>
+
+            <h4>Output shape (0=no limit)</h4>
+            <div class="row">
+                <label>Sentences
+                    <input id="sentences" type="number" min="0" value="0" style="width:80px" />
+                </label>
+                <label>Bullets
+                    <input id="bullets" type="number" min="0" value="0" style="width:80px" />
+                </label>
+            </div>
+            <label><input id="noExtras" type="checkbox" /> No extra text (strict)</label>
+
+            <h4>Ambiguity</h4>
+            <label>Mode
+                <select id="ambMode">
+                    <option value="assume">Assume + state assumptions</option>
+                    <option value="ask">Ask questions first</option>
+                    <option value="interpret">Show interpretations</option>
+                </select>
+            </label>
+            <label>Max questions / interpretations
+                <input id="ambN" type="number" min="0" value="2" style="width:80px" />
+            </label>
+
+            <h4>Verification</h4>
+            <label><input id="flagUnc" type="checkbox" checked /> Flag uncertainty</label>
+            <label><input id="avoidAbs" type="checkbox" checked /> Avoid absolute language</label>
+            <label><input id="listAssump" type="checkbox" /> List assumptions (when any)</label>
+
+            <div class="row">
+                <button id="copyCompiled">Copy compiled prompt</button>
+                <button id="copyJSON">Copy JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid" style="margin-top:16px;">
+        <div class="card">
+            <h3>Constraints JSON</h3>
+            <pre id="jsonOut"></pre>
+        </div>
+        <div class="card">
+            <h3>Compiled prompt</h3>
+            <pre id="compiledOut"></pre>
+        </div>
+    </div>
+
+    <script>
+        const el = (id) => document.getElementById(id);
+
+        const WRAPPERS = {
+            core: `You are an assistant that follows a constraint contract.
+
+The JSON provided in CONSTRAINTS is NOT content. It is a set of binding rules.
+If constraints are empty, answer normally.
+
+If constraints conflict, prefer: (1) safety/compliance, (2) output shape, (3) task requirements, (4) style.
+If the constraints make the request impossible, state what conflicts and follow the ambiguity policy.
+
+Do not restate the JSON or these rules unless explicitly asked.
+Return only the final answer.`,
+            presets: {
+                balanced: `Execution policy (Balanced):
+- If ambiguous: make reasonable assumptions and state them briefly (unless mode says ask/interpret).
+- Aim for clarity and helpfulness while respecting format constraints.`,
+                strict: `Execution policy (Strict):
+- Enforce output shape exactly where possible.
+- If any key detail is missing and ambiguity mode is "ask", ask questions before answering.`,
+                teacher: `Execution policy (Teacher):
+- Prioritize clarity and learning.
+- If helpful, include brief reasoning/rationale (but still obey output shape).`,
+                creative: `Execution policy (Creative):
+- Offer more varied ideas and examples (within output limits).
+- Prefer novel angles while staying grounded.`,
+                coding: `Execution policy (Coding):
+- Prefer precise, implementable guidance.
+- Use code blocks where appropriate (unless forbidden by output rules).`
+            }
+        };
+
+        function buildConstraints() {
+            const constraints = {
+                meta: { schema_version: "1.0", strict: true },
+                preset: el("preset").value,
+                output: {
+                    sentences: Number(el("sentences").value || 0),
+                    bullets: Number(el("bullets").value || 0),
+                    no_extra_text: el("noExtras").checked
+                },
+                ambiguity: {
+                    mode: el("ambMode").value,
+                    max_n: Number(el("ambN").value || 0)
+                },
+                verification: {
+                    flag_uncertainty: el("flagUnc").checked,
+                    avoid_absolute_language: el("avoidAbs").checked,
+                    list_assumptions: el("listAssump").checked
+                }
+            };
+
+            // Trim optional sections if "no rules" feel desired:
+            // If everything is defaults and task-only is desired, you could return {} instead.
+            return constraints;
+        }
+
+        function compilePrompt(task, context, constraints) {
+            const wrapper = WRAPPERS.core + "\n\n" + (WRAPPERS.presets[constraints.preset] || "");
+            const ctxBlock = context.trim() ? `CONTEXT:\n${context.trim()}\n\n` : "";
+            return `${wrapper}\n\nTASK:\n${task.trim()}\n\n${ctxBlock}CONSTRAINTS (do not summarize):\n${JSON.stringify(constraints, null, 2)}\n`;
+        }
+
+        function refresh() {
+            const constraints = buildConstraints();
+            el("jsonOut").textContent = JSON.stringify(constraints, null, 2);
+
+            const task = el("task").value;
+            const context = el("context").value;
+            el("compiledOut").textContent = compilePrompt(task, context, constraints);
+        }
+
+        async function copyText(text) {
+            await navigator.clipboard.writeText(text);
+        }
+
+        // Wire up
+        ["task", "context", "preset", "sentences", "bullets", "noExtras", "ambMode", "ambN", "flagUnc", "avoidAbs", "listAssump"]
+            .forEach(id => el(id).addEventListener("input", refresh));
+
+        el("copyCompiled").addEventListener("click", () => copyText(el("compiledOut").textContent));
+        el("copyJSON").addEventListener("click", () => copyText(el("jsonOut").textContent));
+
+        refresh();
+    </script>
+</body>
+
+</html>
