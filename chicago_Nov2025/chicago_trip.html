@@ -6,6 +6,10 @@
     <title>🌇Chicago Trip</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: system-ui, sans-serif;
             margin: 1.5rem;
@@ -18,9 +22,29 @@
             border: 2px solid black;
         }
 
+        img:hover {
+            filter: brightness(1.2);
+        }
+
+        video {
+            margin: 1rem;
+            border: 2px solid black;
+        }
+
+        .media-row {
+            display: flex;
+            align-items: center;
+            /* gap: 16px; */
+        }
+
         .sideText {
             font-size: smaller;
             font-weight: bold;
+        }
+
+        nav {
+            user-select: none;
+            /* prevent button and page tracker selection */
         }
 
         nav button {
@@ -28,10 +52,12 @@
             cursor: pointer;
             padding: 0.25em 1em;
             margin-right: 0.25em;
-            background: #1976d2;
-            color: white;
+            background: #206bb6;
             border-radius: 10px;
             font-size: 20px;
+            /* Color experiments with border */
+            /* color: #000;
+            border: 1.5px solid currentColor; */
         }
 
         nav button:disabled {
@@ -93,33 +119,35 @@
         <br>
         If you want to see ALL the pictures and videos from the trip, check out the repo here:<br>
         <a href="https://drive.google.com/drive/folders/1vEvapaulht57TghsPrCyfZKnwhIZQwlB?usp=sharing" target="_blank">
-            Chicago Trip Media Folder</a>
+            Chicago Trip Media Folder</a><br><br>
         <hr>
         <div class="sideText">I'm trying a new approach for this web page: a Single Page
             Application (SPA).<br>
-            Basically, all the content is in chunks of HTML, and all media is linked, so no separate files need to go
-            with the HTML file.<br>
+            All the content is in chunks of HTML, all CSS is included, and all media is linked, so no separate files
+            need to go with the HTML file.<br>
             When you use the nav buttons, the existing content is hidden and the new content (inside its own div) is
             loaded.<br>
-            The effect is a site with multiple pages, but there's just one file! Super easy to share.<br></div>
+            The effect is a site with multiple pages, but there's just one file. Super easy to share!<br><br>
+        </div>
     </div>
 
     <div class="page" data-page="1">
         <h1>Science Museum</h1>
-        Shadow-tracking apps: on the left, butterflies land on your shadow; on the right, your shadow "collects" the
+        <strong>Shadow-tracking apps:</strong> On the left, butterflies land on your shadow; on the right, your shadow
+        "collects" the
         falling particles.<br>
         Pretty straightforward to do these with a camera and some image processing to detect the high-contrast shadow
         area.<br>
-        Then, use the shadow area as a collider in Unity/Unreal or p5.js with a physics library.<br>
+        Then, use the shadow area as a collider in Unity/Unreal or use p5.js with a physics library.<br>
         <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_122804.jpg?raw=true"
             target="_blank">
-            <img
-                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_122804.jpg?raw=true"><br></a>
+            <img src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_122804.jpg?raw=true"
+                style="width:500px"><br></a>
     </div>
 
     <div class="page" data-page="2">
         <h1>Science Museum</h1>
-        Yes...that is actually a captured German U-Boat from World War II!<br>
+        Yes...that is an <strong>actual German U-Boat</strong> captured during World War II!<br>
         Plus a cool navigation simulator (with custom controls that would be really fun to build, totally
         doable).<br>
         They had a bunch of old-school computers and consoles from the sub on display,
@@ -140,25 +168,27 @@
 
     <div class="page" data-page="3">
         <h1>Science Museum</h1>
-        <strong>Photogrammetry!</strong><br>
-        Been really interested in this technique lately, where you take lots of pictures of a real-world object
+        <strong>Photogrammetry!</strong><br><br>
+        Take lots of pictures of a real-world object
         from different overlapping angles, then use software (I'm using RealityScan by Epic, free) to stitch
         them together and create a 3D model. Note that this differs from 3D scanning with LIDAR or depth cameras, which
         is better for determining space in larger areas like rooms or buildings (but not as good for texture
         detail).<br><br>
-        I'm planning to write up the workflow so others can try it too---capture sculpture, props, costumes, etc and use
+        I'm planning to write up and make videos of the workflow so others can try it too---capture sculpture, props,
+        costumes, etc and use
         the models in game engines if you want, put them in your portfolio, etc. The results are really impressive
         (amazing detail and textures) and the process doesn't take long.<br><br>
         On the trip I found a dozen or so interesting objects to try this on. Here's a music room in a giant "Fairy
         Castle" exhibit.
-        This was only a few pictures and it was through glass, so it wasn't ideal, but the model is still pretty
-        amazing, check out the video!<br>
+        This was only six pictures and it was through glass, so it wasn't ideal, but the model still looks pretty great,
+        <strong>check out the video!</strong><br>
 
         <div id="fairyCastlePhotogrammetry">
+            <!-- Note style (small width so more fit on the page) for the images inside this div only: -->
             <style>
                 #fairyCastlePhotogrammetry img {
                     width: 12%;
-                    margin: 0.25rem;
+                    margin: 1rem 0.25rem;
                 }
             </style>
             <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125503.jpg?raw=true"
@@ -187,9 +217,9 @@
                     src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/20251122_125519.jpg?raw=true"></a>
         </div>
 
-        <video width="640" controls>
+        <video width="640" controls muted>
             <source
-                src="https://github.com/seejayjames2023/media/raw/refs/heads/main/videos/chicagoTrip/fairy_castle_music_room1.mp4"
+                src="https://raw.githubusercontent.com/seejayjames2023/media/main/videos/chicagoTrip/fairy_castle_music_room1.mp4"
                 type="video/mp4">
             Your browser does not support the video tag.
         </video>
@@ -206,7 +236,7 @@
             <img
                 src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/VR_cosmos_coaster.png?raw=true"></a><br>
         So I spent awhile researching about exactly why it happens, and it's not just "VR makes you
-        sick"...there are a LOT of factors that play in, and these are critical for designers.<br><br>
+        sick"...there are a LOT of factors involved, and <strong>these are critical for designers.</strong><br><br>
         The main idea is that motion sickness happens when your brain gets conflicting signals from your eyes, your
         inner ear (which senses motion), and your proprioceptors (which sense body position).<br>
         In VR, your eyes see the virtual world moving but the other two systems don't (you're sitting still, or
@@ -218,86 +248,193 @@
         eyes closed), the visual disconnect is the main cause. Then stop the ride asap and when you're able, walk around
         and
         get fresh air.<br><br>
-        Even though I bailed out before it got too bad, it took awhile before I felt recovered.
-        A real eye-opener (even while shutting my eyes to avoid nausea) about how important good design
-        is for user comfort in VR!<br><br>
+        Even though I bailed out before it got too bad, it took quite awhile before I felt recovered.
+        <strong>This was quite the lesson about how important good design is for user comfort in VR!</strong><br><br>
 
-        <div class="sideText">To reduce motion sickness in VR experiences, designers can use techniques like:<br>
+        <hr>
+        <br>
+
+        <div class="sideText" style="font-size:larger">To reduce motion sickness in VR experiences, designers can use
+            these techniques:</div><br>
+        <div class="sideText">
             - Minimize rapid or unnatural movements in the virtual environment<br>
-            - Use teleportation or "blink" movement instead of smooth locomotion, especially if it has acceleration<br>
+            - Use teleportation or "blink" movement and rotation, especially if it has acceleration<br>
             - Provide a stable reference frame (like a cockpit or vehicle interior)<br>
             - Limit the field of view during fast movements (your peripheral vision is very sensitive to motion)<br>
-            - Give users more control like movement speed, turning methods, and whether the camera moves on its own
-            (generally not good, ESPECIALLY rotation)<br>
+            - Give users more control over movement and rotation speed instead of allowing the camera to move and rotate
+            on its own<br>
+            - Movement is generally less disorienting than rotation<br>
+            - Rotation can be QUITE disorienting, generally in this order from least to most:<br>
+            - - Pitch (tilt head up/down)<br>
+            - - Yaw (turn head left/right)<br>
+            - - Roll (tilt head left/right)<br>
+            - Combining two axes of rotation (like pitch + roll) can make users nauseous in no time, especially if there
+            are no reference elements and/or the user is not controlling it<br>
             - Ensure high frame rates and low latency to reduce visual lag<br><br>
         </div>
     </div>
 
     <div class="page" data-page="5">
-        <h1>Chicago Trip!</h1>
-        <p>Welcome! This is the first page.</p>
-        <img src="https://picsum.photos/300">
+        <h1>Planetarium</h1>
+        The Adler Planetarium was fantastic! So many cool exhibits and a great show about the universe.<br>
+        <strong>Many of the materials there are created in-house</strong> using similar tools to what we use in
+        Creative Technologies,
+        like Unreal Engine and After Effects.<br><br>
+        Here's a "Moon Explorer" installation where you can fly around a 3D model of the moon and see different
+        features.<br>
+        Joystick, some buttons, the model of the moon, and a big screen--all pretty straightforward to build your own
+        version of this!<br>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/moon_explorer1.jpg?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/moon_explorer1.jpg?raw=true"></a><br>
+        <video width="480" controls muted>
+            <source
+                src="https://raw.githubusercontent.com/seejayjames2023/media/main/videos/chicagoTrip/moon_explorer1.mp4"
+                type="video/mp4">
+            Your browser does not support the video tag.
+        </video><br>
     </div>
 
     <div class="page" data-page="6">
-        <h1>Chicago Trip!</h1>
-        <p>Welcome! This is the first page.</p>
-        <img src="https://picsum.photos/300">
+        <h1>Planetarium</h1>
+        A couple renderings of alien planets, created with Unreal Engine. They used real images from Mars for the
+        landscape, though the rover is a model. (The colored banding is an artifact from the screen).<br>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/exoplanet_earthlike.png?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/exoplanet_earthlike.png?raw=true"></a><br>
+
+        <div class="media-row">
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/exoplanet_icy.png?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/exoplanet_icy.png?raw=true"></a><br>
+
+            <video width="480" controls muted>
+                <source
+                    src="https://raw.githubusercontent.com/seejayjames2023/media/main/videos/chicagoTrip/exoplanet_icy.mp4"
+                    type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/exoplanet_mars.jpg?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/exoplanet_mars.jpg?raw=true"></a><br>
     </div>
 
     <div class="page" data-page="7">
-        <h1>Chicago Trip!</h1>
-        <p>Welcome! This is the first page.</p>
-        <img src="https://picsum.photos/300">
+        <h1>Planetarium</h1>
+        <strong>Meteorites!</strong><br>Many of these space rocks are billions of years old. This one is about two feet
+        long and a foot in diameter, made mostly of iron and nickel, <strong>and weighs over
+            1000 pounds!</strong><br><br>
+        <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite1.jpg?raw=true"
+            target="_blank">
+            <img
+                src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite1.jpg?raw=true"></a><br>
+        I did the 3D model/photogrammetry process on this, using the few pictures I could get without
+        moving it (obviously hehe).<br>
+        My idea was to take the model into Unity and make a game where you have a ship and explore the
+        meteorite up
+        close <strong>as though it's a much larger asteroid.</strong><br>
+
+        Here's a video flyby to give a feel for gameplay. I put a simple script on the camera to move it
+        forward, then modified the
+        material settings (using the Inspector, not seen) in realtime.<br>
+        <video width="480" controls muted>
+            <source
+                src="https://raw.githubusercontent.com/seejayjames2023/media/main/videos/chicagoTrip/meteorite_flyby1.mp4"
+                type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <br><br>
+        Here are some shots of different materials applied to the model in Unity, showing how different the look can be
+        depending on the settings like <strong>base texture, color, and emission.</strong> As you see in the
+        video, all these settings can be modified in realtime or because of user input, events, timers, etc. There's
+        literally no limit to the kinds of effects and interactions you can create...and using photogrammetry, you can
+        bring in all sorts of real-world objects and spaces!<br>
+        <div class="media-row"><a
+                href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite_mat1.png?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite_mat1.png?raw=true"></a>
+            <strong>Original texture</strong>
+        </div>
+
+        <div class="media-row">
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite_mat2.png?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite_mat2.png?raw=true"></a>
+            <strong>Original texture, metallic effect</strong>
+        </div>
+
+        <div class="media-row">
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite_mat3.png?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite_mat3.png?raw=true"></a>
+            <strong>Alternate rock texture, gold emission</strong>
+        </div>
+
+        <div class="media-row">
+            <a href="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite_mat4.png?raw=true"
+                target="_blank">
+                <img
+                    src="https://github.com/seejayjames2023/media/blob/main/images/chicagoTrip/meteorite_mat4.png?raw=true"></a>
+            <strong>Alternate rock texture, red/lava emission, closeup</strong>
+        </div>
+
+
     </div>
 
     <div class="page" data-page="8">
-        <h1>Chicago Trip!</h1>
-        <p>Welcome! This is the first page.</p>
+        <h1>WNDR Museum</h1>
+        In Progress<br>
         <img src="https://picsum.photos/300">
     </div>
 
     <div class="page" data-page="9">
-        <h1>Chicago Trip!</h1>
-        <p>Welcome! This is the first page.</p>
+        <h1>WNDR Museum</h1>
+        In Progress<br>
         <img src="https://picsum.photos/300">
     </div>
 
     <div class="page" data-page="10">
-        <h1>Chicago Trip!</h1>
-        <p>Welcome! This is the first page.</p>
+        <h1>WNDR Museum</h1>
+        In Progress<br>
         <img src="https://picsum.photos/300">
     </div>
 
     <div class="page" data-page="11">
-        <h1>Chicago Trip!</h1>
-        <p>Welcome! This is the first page.</p>
+        <h1>Gem/Mineral Museum</h1>
+        In Progress<br>
         <img src="https://picsum.photos/300">
     </div>
 
     <nav id="footer-nav" style="margin-top:1rem">
-        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})">👆</button>
+        <button id="scroll-top">👆</button>
     </nav>
 
     <script>
+
         function initSPA() {
             const pages = [...document.querySelectorAll('.page')];
             const total = pages.length;
 
             function showPage(i) {
                 pages.forEach(p => p.classList.remove('active'));
-                const el = document.querySelector(`.page[data-page="${i}"]`);
-                if (el) el.classList.add('active');
+                pages[i]?.classList.add('active');
                 window.location.hash = "#" + i;
                 updateNavButtons(i);
                 // May not need the following (nav buttons are at top) but just in case
                 window.scrollTo({ top: 0, behavior: "instant" });
-                document.getElementById("pageTracker").innerHTML = i + "/" + total;
+                document.getElementById("pageTracker").innerHTML = i + "/" + (total - 1);
             }
 
-
             function updateNavButtons(i) {
-                const total = document.querySelectorAll('.page').length;
                 document.getElementById("nav-back").disabled = (i <= 0);
                 document.getElementById("nav-forward").disabled = (i >= total - 1);
             }
@@ -316,12 +453,12 @@
                 const i = getCurrentIndex();
                 if (i < total - 1) showPage(i + 1);
             }
-            function random() {
+            function random() { // no repeats
                 if (total > 1) { // ensure no infinite loop
                     const i = getCurrentIndex();
                     let r;
                     do { r = Math.floor(Math.random() * total); }
-                    while (r === i);
+                    while (r === i); // avoid same page
                     showPage(r);
                 }
             }
@@ -331,6 +468,11 @@
             document.getElementById('nav-back').onclick = back;
             document.getElementById('nav-forward').onclick = forward;
             document.getElementById('nav-random').onclick = random;
+            document.getElementById('scroll-top')
+                .addEventListener('click', () =>
+                    window.scrollTo({ top: 0 })
+                    // smooth scrolling already handled by CSS in html tag
+                );
 
             // Deep-linking
             window.addEventListener('hashchange', () => showPage(getCurrentIndex()));
@@ -340,6 +482,31 @@
         }
 
         document.addEventListener('DOMContentLoaded', initSPA);
+
+
+        ////////////////////////////////////////////
+
+        /* The following is for auto-reload during development (timed, not on file change).
+Better way is to use an extension like LiveReload or local web server with live-reload capability.
+These options will only reload on save. */
+
+        var autoReload = false; // set to true to enable auto-reload for development
+        if (autoReload) {
+            /* Auto-reload every 5 seconds (for development purposes) */
+            setInterval(() => {
+                window.location.reload();
+            }, 5000);
+        }
+
+        /*
+        // Example dynamic background color change code (can remove if not needed)
+        setInterval(() => {
+            document.body.style.backgroundColor =
+                `rgb(${200 + Math.floor(55 * Math.sin(Date.now() / 1000))}, 
+                     ${180 + Math.floor(55 * Math.sin(Date.now() / 1100 + 2))}, 
+                     ${160 + Math.floor(55 * Math.sin(Date.now() / 1200 + 4))})`;
+        }, 100);
+        */
     </script>
 
 </body>
