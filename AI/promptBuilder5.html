@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>LLM Assistant Behavior Builder</title>
+    <!-- This tool helps you shape how an AI assistant thinks, not just what it answers. -->
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 110px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        label {
+            display: block;
+            margin: 6px 0;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .row>* {
+            margin: 4px 0;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #fafafa;
+            font-size: larger;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            margin: 0;
+        }
+
+        button {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #f4f4f4;
+        }
+
+        small {
+            color: #333;
+            font-weight: bold;
+        }
+
+        details {
+            margin-top: 10px;
+        }
+
+        summary {
+            cursor: pointer;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted #bbb;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 330px;
+            background-color: #111;
+            color: #fff;
+            text-align: left;
+            border-radius: 8px;
+            padding: 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-10%);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            font-size: 12px;
+            line-height: 1.3;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tight {
+            margin-top: 8px;
+        }
+
+        .copied {
+            font-size: 14px;
+            color: #2b7a2b;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>LLM Assistant Behavior Builder!</h2>
+    <small>Adjust defaults on the left → watch rules update on the right → copy/paste the SYSTEM RULES into ChatGPT
+        (or any LLM). Then ask questions as usual.<br>
+        You can make adjustments to the rules during the chat with phrases such as “Use bullet points” or “Use more
+        conceptual thinking”.<br>
+        If you want to change overall behavior, you can choose new settings on this page and copy/paste
+        the new system rules into your chat again.<br></small>
+
+
+    <div class="grid" style="margin-top:12px;">
+        <div class="card">
+            <h3>Controls</h3>
+
+            <label>Preset (sets values below)
+                <select id="preset">
+                    <option value="balanced">Balanced (default)</option>
+                    <option value="tutor">Tutor</option>
+                    <option value="reviewer">Reviewer</option>
+                    <option value="collaborator">Collaborator</option>
+                    <option value="brainstormer">Brainstormer</option>
+                    <option value="study_guide">Study guide</option>
+                </select>
+            </label>
+
+            <h4>Behavior</h4>
+
+            <label>Role
+                <select id="role">
+                    <option value="balanced">Balanced assistant</option>
+                    <option value="tutor">Tutor</option>
+                    <option value="coach">Coach</option>
+                    <option value="reviewer">Reviewer</option>
+                    <option value="collaborator">Collaborator</option>
+                    <option value="devils_advocate">Devil's advocate</option>
+                </select>
+            </label>
+
+            <label>
+                <span class="tooltip">Breadth (Exploratory ↔ Direct)
+                    <span class="tooltiptext">
+                        <b>Breadth</b> controls how many alternatives and tradeoffs the assistant surfaces.<br><br>
+                        <b>Exploratory</b>: explores possibilities, tradeoffs, interpretations.<br>
+                        <b>Direct</b>: gives a clear answer quickly; minimal alternatives.
+                    </span>
+                </span>
+                <select id="breadth">
+                    <option value="exploratory">Exploratory</option>
+                    <option value="balanced" selected>Balanced</option>
+                    <option value="direct">Direct</option>
+                </select>
+            </label>
+
+            <label>
+                <span class="tooltip">Grounding (Concrete ↔ Abstract)
+                    <span class="tooltiptext">
+                        <b>Grounding</b> controls whether the assistant uses examples first or principles first.<br><br>
+                        <b>Concrete</b>: examples, scenarios, specific cases.<br>
+                        <b>Abstract</b>: concepts, principles, generalized framing.
+                    </span>
+                </span>
+                <select id="grounding">
+                    <option value="concrete">Concrete</option>
+                    <option value="balanced" selected>Balanced</option>
+                    <option value="abstract">Abstract</option>
+                </select>
+            </label>
+
+            <label>
+                <span class="tooltip">Risk (Conservative ↔ Speculative)
+                    <span class="tooltiptext">
+                        <b>Risk</b> controls how far beyond the given info the assistant may extrapolate.<br><br>
+                        <b>Conservative</b>: sticks to established practice; avoids extrapolation.<br>
+                        <b>Speculative</b>: explores "what-if" ideas; labels speculation clearly.
+                    </span>
+                </span>
+                <select id="risk">
+                    <option value="conservative">Conservative</option>
+                    <option value="balanced" selected>Balanced</option>
+                    <option value="speculative">Speculative</option>
+                </select>
+            </label>
+
+            <h4>Delivery</h4>
+            <div>
+                <label>Verbosity
+                    <select id="verbosity">
+                        <option value="short">Short</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="thorough">Thorough</option>
+                    </select>
+                </label>
+                <label>Structure
+                    <select id="structure">
+                        <option value="paragraphs" selected>Short paragraphs</option>
+                        <option value="headings">Headings</option>
+                        <option value="bullets">Bullets</option>
+                    </select>
+                </label>
+            </div>
+
+            <details open>
+                <summary><b>Learning options</b></summary>
+                <label><input id="includeExample" type="checkbox" /> Include one concrete example when helpful</label>
+                <label><input id="commonMistakes" type="checkbox" /> Call out common misconceptions / mistakes</label>
+                <label><input id="checkUnderstanding" type="checkbox" /> Ask one quick check-for-understanding question
+                    (when appropriate)</label>
+                <label><input id="practiceQs" type="checkbox" /> Provide 3 short practice questions (with brief
+                    answers)</label>
+                <label><input id="nextSteps" type="checkbox" checked /> End with “next steps” suggestions</label>
+                <label><input id="reflectionPrompts" type="checkbox" /> Provide 2 reflection prompts (for
+                    journaling/discussion)</label>
+            </details>
+
+            <details>
+                <summary><b>Style constraints</b></summary>
+                <label><input id="avoidEmDash" type="checkbox" checked /> Avoid em dashes (—)</label>
+                <label><input id="avoidParens" type="checkbox" checked /> Avoid parenthetical asides</label>
+                <label><input id="avoidMeta" type="checkbox" checked /> Avoid meta phrases (“in summary”, “it’s worth
+                    noting”)</label>
+                <label><input id="avoidBullets" type="checkbox" /> Avoid bullet lists (unless user asks)</label>
+            </details>
+
+        </div>
+
+        <div class="card">
+            <h3 class="row">SYSTEM RULES
+                <button id="copyRules">Copy SYSTEM RULES</button>
+                <span id="copyAck" class="copied" style="display:none;">Copied!</span>
+            </h3>
+            <pre id="rulesOut"></pre>
+        </div>
+    </div>
+
+    <script>
+        const el = (id) => document.getElementById(id);
+
+        const SNIPPETS = {
+            authority: ["The following rules define default behavior for all responses."],
+            role: {
+                balanced: ["Write as a helpful assistant with an educator-friendly tone."],
+                tutor: ["Write as a tutor: prioritize understanding and learning over speed."],
+                coach: ["Write as a coach: focus on actionable next steps and improvement."],
+                reviewer: ["Write as a reviewer: provide critique, evaluation, and concrete revisions."],
+                collaborator: ["Write as a collaborator: iterate with the user and offer options."],
+                devils_advocate: ["Write as a devil's advocate: stress-test ideas and surface counterarguments respectfully."]
+            },
+            breadth: {
+                exploratory: [
+                    "Explore multiple plausible approaches before settling on a recommendation.",
+                    "Surface tradeoffs and alternatives when they are meaningfully different.",
+                    "Ask clarifying questions when they would materially improve the answer."
+                ],
+                balanced: ["Offer a clear primary answer, and include alternatives only when they matter."],
+                direct: [
+                    "Provide a clear, direct answer without exploring alternatives unless asked.",
+                    "Do not ask clarifying questions unless essential to proceed."
+                ]
+            },
+            grounding: {
+                concrete: [
+                    "Favor concrete examples and specific scenarios over general principles.",
+                    "When explaining, start with a tangible example before generalizing."
+                ],
+                balanced: ["Balance examples with principles; include an example when it improves clarity."],
+                abstract: [
+                    "Focus on underlying principles and conceptual framing rather than specific examples.",
+                    "Minimize anecdotes or situational detail unless requested."
+                ]
+            },
+            risk: {
+                conservative: [
+                    "Stay close to established knowledge and common practice.",
+                    "Avoid speculation or extrapolation beyond the provided context unless explicitly requested.",
+                    "Clearly distinguish facts from interpretation."
+                ],
+                balanced: ["Be grounded; when you infer beyond the given information, label it as an inference."],
+                speculative: [
+                    "Explore plausible extensions and 'what-if' scenarios when helpful.",
+                    "It is acceptable to suggest unconventional ideas; clearly label speculation as speculation."
+                ]
+            },
+            delivery: {
+                verbosity: {
+                    short: ["Be concise. Prefer short paragraphs and omit non-essential details."],
+                    medium: ["Use a moderate level of detail. Prefer clarity over completeness."],
+                    thorough: ["Be thorough. Include enough detail that a motivated reader can apply the advice."]
+                },
+                structure: {
+                    paragraphs: [
+                        "Prefer short paragraphs with clear topic sentences.",
+                        "Avoid long lists unless the user asks for them."
+                    ],
+                    headings: [
+                        "Use short headings to organize the response when it improves readability.",
+                        "Under each heading, use short paragraphs."
+                    ],
+                    bullets: [
+                        "Use bullet lists when it improves readability.",
+                        "Keep bullet lists tight and avoid excessive nesting."
+                    ]
+                }
+            },
+            style: {
+                avoidEmDash: ["Avoid em dashes (—). Prefer commas or separate sentences."],
+                avoidParens: ["Avoid parenthetical asides. Use separate sentences instead."],
+                avoidMeta: ["Avoid meta phrases such as “in summary” or “it’s worth noting,” unless the user asks for a summary."],
+                avoidBullets: ["Avoid bullet lists unless the user explicitly requests them."]
+            },
+            learning: {
+                includeExample: ["Include one concrete example when it would improve clarity."],
+                commonMistakes: ["Call out common misconceptions or mistakes when relevant."],
+                checkUnderstanding: ["When appropriate, ask one quick check-for-understanding question."],
+                practiceQs: ["When appropriate, provide 3 short practice questions with brief answers."],
+                nextSteps: ["End with a short “next steps” list of suggested actions."],
+                reflectionPrompts: ["When appropriate, provide 2 reflection prompts for journaling or discussion."]
+            }
+        };
+
+        const PRESETS = {
+            balanced: {
+                role: "balanced", breadth: "balanced", grounding: "balanced", risk: "balanced",
+                verbosity: "medium", structure: "paragraphs",
+                avoidEmDash: true, avoidParens: true, avoidMeta: true, avoidBullets: false,
+                includeExample: false, commonMistakes: false, checkUnderstanding: false, practiceQs: false, nextSteps: true, reflectionPrompts: false
+            },
+            tutor: {
+                role: "tutor", breadth: "exploratory", grounding: "concrete", risk: "balanced",
+                verbosity: "thorough", structure: "headings",
+                avoidEmDash: true, avoidParens: true, avoidMeta: true, avoidBullets: false,
+                includeExample: true, commonMistakes: true, checkUnderstanding: true, practiceQs: true, nextSteps: true, reflectionPrompts: false
+            },
+            reviewer: {
+                role: "reviewer", breadth: "direct", grounding: "concrete", risk: "conservative",
+                verbosity: "medium", structure: "headings",
+                avoidEmDash: true, avoidParens: true, avoidMeta: true, avoidBullets: false,
+                includeExample: true, commonMistakes: true, checkUnderstanding: false, practiceQs: false, nextSteps: true, reflectionPrompts: false
+            },
+            collaborator: {
+                role: "collaborator", breadth: "balanced", grounding: "balanced", risk: "balanced",
+                verbosity: "medium", structure: "paragraphs",
+                avoidEmDash: true, avoidParens: true, avoidMeta: true, avoidBullets: false,
+                includeExample: false, commonMistakes: false, checkUnderstanding: false, practiceQs: false, nextSteps: true, reflectionPrompts: false
+            },
+            brainstormer: {
+                role: "collaborator", breadth: "exploratory", grounding: "concrete", risk: "speculative",
+                verbosity: "thorough", structure: "bullets",
+                avoidEmDash: true, avoidParens: false, avoidMeta: true, avoidBullets: false,
+                includeExample: true, commonMistakes: false, checkUnderstanding: false, practiceQs: false, nextSteps: true, reflectionPrompts: true
+            },
+            study_guide: {
+                role: "tutor", breadth: "balanced", grounding: "concrete", risk: "conservative",
+                verbosity: "thorough", structure: "headings",
+                avoidEmDash: true, avoidParens: true, avoidMeta: true, avoidBullets: false,
+                includeExample: true, commonMistakes: true, checkUnderstanding: true, practiceQs: true, nextSteps: true, reflectionPrompts: true
+            }
+        };
+
+        function linesFromControls() {
+            const lines = [];
+            lines.push({ section: "Authority", line: SNIPPETS.authority[0] });
+
+            const role = el("role").value;
+            SNIPPETS.role[role].forEach(s => lines.push({ section: "Role", line: s }));
+
+            const breadth = el("breadth").value;
+            SNIPPETS.breadth[breadth].forEach(s => lines.push({ section: "Behavior", line: s }));
+
+            const grounding = el("grounding").value;
+            SNIPPETS.grounding[grounding].forEach(s => lines.push({ section: "Behavior", line: s }));
+
+            const risk = el("risk").value;
+            SNIPPETS.risk[risk].forEach(s => lines.push({ section: "Behavior", line: s }));
+
+            const verbosity = el("verbosity").value;
+            SNIPPETS.delivery.verbosity[verbosity].forEach(s => lines.push({ section: "Delivery", line: s }));
+
+            const structure = el("structure").value;
+            SNIPPETS.delivery.structure[structure].forEach(s => lines.push({ section: "Delivery", line: s }));
+
+            // Learning options first (so it appears before Style in compiled rules)
+            if (el("includeExample").checked) SNIPPETS.learning.includeExample.forEach(s => lines.push({ section: "Learning options", line: s }));
+            if (el("commonMistakes").checked) SNIPPETS.learning.commonMistakes.forEach(s => lines.push({ section: "Learning options", line: s }));
+            if (el("checkUnderstanding").checked) SNIPPETS.learning.checkUnderstanding.forEach(s => lines.push({ section: "Learning options", line: s }));
+            if (el("practiceQs").checked) SNIPPETS.learning.practiceQs.forEach(s => lines.push({ section: "Learning options", line: s }));
+            if (el("nextSteps").checked) SNIPPETS.learning.nextSteps.forEach(s => lines.push({ section: "Learning options", line: s }));
+            if (el("reflectionPrompts").checked) SNIPPETS.learning.reflectionPrompts.forEach(s => lines.push({ section: "Learning options", line: s }));
+
+            // Style after Learning options
+            if (el("avoidEmDash").checked) SNIPPETS.style.avoidEmDash.forEach(s => lines.push({ section: "Style", line: s }));
+            if (el("avoidParens").checked) SNIPPETS.style.avoidParens.forEach(s => lines.push({ section: "Style", line: s }));
+            if (el("avoidMeta").checked) SNIPPETS.style.avoidMeta.forEach(s => lines.push({ section: "Style", line: s }));
+            if (el("avoidBullets").checked) SNIPPETS.style.avoidBullets.forEach(s => lines.push({ section: "Style", line: s }));
+
+            // Dedupe identical lines
+            const seen = new Set();
+            const deduped = [];
+            for (const item of lines) {
+                const key = item.section + "||" + item.line;
+                if (!seen.has(key)) { seen.add(key); deduped.push(item); }
+            }
+            return deduped;
+        }
+
+        function buildRulesText() {
+            const items = linesFromControls();
+            const order = ["Authority", "Role", "Behavior", "Delivery", "Learning options", "Style"];
+            const grouped = new Map();
+            order.forEach(k => grouped.set(k, []));
+            items.forEach(it => {
+                if (!grouped.has(it.section)) grouped.set(it.section, []);
+                grouped.get(it.section).push(it.line);
+            });
+
+            let out = "SYSTEM RULES:\n\n";
+            order.forEach(section => {
+                const arr = grouped.get(section) || [];
+                if (!arr.length) return;
+                out += section.toUpperCase() + "\n";
+                arr.forEach(line => { out += "- " + line + "\n"; });
+                out += "\n";
+            });
+
+            return out.trim() + "\n";
+        }
+
+        function applyPreset(name) {
+            const p = PRESETS[name] || PRESETS.balanced;
+
+            el("role").value = p.role;
+            el("breadth").value = p.breadth;
+            el("grounding").value = p.grounding;
+            el("risk").value = p.risk;
+            el("verbosity").value = p.verbosity;
+            el("structure").value = p.structure;
+
+            el("avoidEmDash").checked = !!p.avoidEmDash;
+            el("avoidParens").checked = !!p.avoidParens;
+            el("avoidMeta").checked = !!p.avoidMeta;
+            el("avoidBullets").checked = !!p.avoidBullets;
+
+            el("includeExample").checked = !!p.includeExample;
+            el("commonMistakes").checked = !!p.commonMistakes;
+            el("checkUnderstanding").checked = !!p.checkUnderstanding;
+            el("practiceQs").checked = !!p.practiceQs;
+            el("nextSteps").checked = !!p.nextSteps;
+            el("reflectionPrompts").checked = !!p.reflectionPrompts;
+        }
+
+        async function copyText(text) {
+            await navigator.clipboard.writeText(text);
+
+            const ack = el("copyAck");
+            if (!ack) return;
+            ack.style.display = "inline";
+
+            window.clearTimeout(copyText._t);
+            copyText._t = window.setTimeout(() => {
+                ack.style.display = "none";
+            }, 1200);
+        }
+
+        function refresh() {
+            el("rulesOut").textContent = buildRulesText();
+        }
+
+        [
+            "role", "breadth", "grounding", "risk", "verbosity", "structure",
+            "avoidEmDash", "avoidParens", "avoidMeta", "avoidBullets",
+            "includeExample", "commonMistakes", "checkUnderstanding", "practiceQs", "nextSteps", "reflectionPrompts"
+        ].forEach(id => el(id).addEventListener("input", refresh));
+
+        el("preset").addEventListener("change", (e) => { applyPreset(e.target.value); refresh(); });
+        el("copyRules").addEventListener("click", () => copyText(el("rulesOut").textContent));
+
+        applyPreset("balanced");
+        refresh();
+    </script>
+</body>
+
+</html>
