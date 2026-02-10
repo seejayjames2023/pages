@@ -157,12 +157,31 @@
 
     <label>
       Fret limit
-      <input id="maxFret" type="number" min="5" max="15" value="7" />
+      <select id="maxFret">
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7" selected>7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+      </select>
     </label>
 
     <label>
       Max fret span
-      <input id="maxSpan" type="number" min="0" max="5" value="2" />
+      <select id="maxSpan">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
     </label>
 
     <label>
@@ -180,10 +199,10 @@
     <label>
       RH/LH, Order
       <select id="stringOrder">
-        <option value="RH16" selected>RH 1..6</option>
-        <option value="RH61">RH 6..1</option>
-        <option value="LH16">LH 1..6</option>
-        <option value="LH61">LH 6..1</option>
+        <option value="RH16" selected>RH 1-6</option>
+        <option value="RH61">RH 6-1</option>
+        <option value="LH16">LH 1-6</option>
+        <option value="LH61">LH 6-1</option>
       </select>
     </label>
 
@@ -208,12 +227,29 @@
 
     <label>
       Arp step (sec)
-      <input id="arpStep" type="number" min="0.1" max="2" step="0.1" value="0.4" />
+      <select id="arpStep">
+        <option value="0.2">0.2</option>
+        <option value="0.4" selected>0.4</option>
+        <option value="0.6">0.6</option>
+        <option value="0.8">0.8</option>
+        <option value="1.0">1.0</option>
+      </select>
     </label>
 
     <label>
       Note length (sec)
-      <input id="noteLen" type="number" min="0.1" max="4" step="0.1" value="1.0" />
+      <select id="noteLen">
+        <option value="0.2">0.2</option>
+        <option value="0.4">0.4</option>
+        <option value="0.6">0.6</option>
+        <option value="0.8" selected>0.8</option>
+        <option value="1.0">1.0</option>
+        <option value="1.2">1.2</option>
+        <option value="1.4">1.4</option>
+        <option value="1.6">1.6</option>
+        <option value="1.8">1.8</option>
+        <option value="2.0">2.0</option>
+      </select>
     </label>
 
     <label>
