@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>3-String Major Triads (Held Notes, Span ≤ 4)</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    body {
+      margin: 16px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    label {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    select,
+    input[type="number"] {
+      padding: 6px 8px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      background: #f1f3f5;
+      border-radius: 999px;
+    }
+
+    .results {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    button.card {
+      text-align: left;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    button.card:hover {
+      border-color: #aaa;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      white-space: pre;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #555;
+    }
+
+    .topnote {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .warn {
+      color: #8a2b2b;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>3-String Major Triads (Held-Only, Span ≤ 4)</h2>
+
+  <div class="row">
+    <label>
+      Root
+      <select id="root">
+        <option value="0">C</option>
+        <option value="1">C# / Db</option>
+        <option value="2">D</option>
+        <option value="3">D# / Eb</option>
+        <option value="4">E</option>
+        <option value="5">F</option>
+        <option value="6">F# / Gb</option>
+        <option value="7">G</option>
+        <option value="8">G# / Ab</option>
+        <option value="9">A</option>
+        <option value="10">A# / Bb</option>
+        <option value="11">B</option>
+      </select>
+    </label>
+
+    <label>
+      Max fret
+      <input id="maxFret" type="number" min="1" max="15" value="12" />
+    </label>
+
+    <label>
+      Max span (frets)
+      <input id="maxSpan" type="number" min="0" max="12" value="4" />
+    </label>
+
+    <label>
+      <input id="allowSkips" type="checkbox" checked />
+      Allow skipping strings
+    </label>
+
+    <label>
+      <input id="ascendingArp" type="checkbox" checked />
+      Ascending
+    </label>
+
+    <label>
+      Arp step (sec)
+      <input id="arpStep" type="number" min="0.05" max="2" step="0.05" value="0.2" />
+    </label>
+
+    <label>
+      Note length (sec)
+      <input id="noteLen" type="number" min="0.05" max="4" step="0.1" value="0.80" />
+    </label>
+
+
+    <span class="pill" id="count">—</span>
+    <span class="small" id="info"></span>
+  </div>
+
+  <div class="small" style="margin-top:10px;">
+    Rules: exactly 3 strings, frets <b>1..max</b> only (open ignored), chord tones must be <b>1-3-5 only</b> (major
+    triad), and
+    <b>(max fret − min fret) ≤ span</b>.
+  </div>
+
+  <div id="results" class="results"></div>
+
+  <script>
+    (() => {
+      // Standard tuning MIDI notes (string 6..1): E2 A2 D3 G3 B3 E4
+      // MIDI: E2=40, A2=45, D3=50, G3=55, B3=59, E4=64
+      const tuningMidi = [40, 45, 50, 55, 59, 64]; // index 0=>string 6, 5=>string 1
+      const pcName = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+      const els = {
+        root: document.getElementById("root"),
+        maxFret: document.getElementById("maxFret"),
+        maxSpan: document.getElementById("maxSpan"),
+        allowSkips: document.getElementById("allowSkips"),
+        ascendingArp: document.getElementById("ascendingArp"),
+        results: document.getElementById("results"),
+        count: document.getElementById("count"),
+        info: document.getElementById("info"),
+      };
+
+      // ---------- Audio (simple, click-to-play) ----------
+      let audioCtx = null;
+      function midiToHz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+      function ensureAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      }
+
+      function playVoicing(midiNotes, ascending = true, step = 0.1, noteLen = 0.5) { // the = are defaults
+        ensureAudio();
+        const now = audioCtx.currentTime;
+
+        // master gain (set to cover the full arpeggio + tail)
+        const master = audioCtx.createGain();
+        master.gain.setValueAtTime(0.25, now);
+        master.connect(audioCtx.destination);
+
+        // total time = last note start + its length (+ a tiny tail)
+        const count = midiNotes.length;
+        const total = (count - 1) * step + noteLen + 0.05;
+
+
+
+        const notes = ascending
+          ? [...midiNotes].sort((a, b) => a - b)  // low -> high
+          : [...midiNotes].sort((a, b) => b - a); // high -> low
+
+
+        notes.forEach((m, i) => {
+          const t0 = now + i * step;
+
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(midiToHz(m), t0);
+
+          // envelope (relative to noteLen)
+          const attack = Math.min(0.01, noteLen * 0.2);
+          const releaseTime = noteLen;
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(0.25, t0 + attack);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + releaseTime);
+
+          osc.connect(g);
+          g.connect(master);
+
+          osc.start(t0);
+          osc.stop(t0 + noteLen + 0.05);
+        });
+      }
+
+
+      // ---------- Core chord math ----------
+      function mod12(n) { return ((n % 12) + 12) % 12; }
+
+      function majorTriadPCs(rootPC) {
+        // "1 3 5 only" for major triad
+        return new Set([rootPC, mod12(rootPC + 4), mod12(rootPC + 7)]);
+      }
+
+      function notePCFromStringFret(stringIndex6to1, fret) {
+        // stringIndex6to1: 6..1, convert to tuningMidi index 0..5
+        const idx = 6 - stringIndex6to1;
+        const midi = tuningMidi[idx] + fret;
+        return mod12(midi);
+      }
+
+      function midiFromStringFret(stringIndex6to1, fret) {
+        const idx = 6 - stringIndex6to1;
+        return tuningMidi[idx] + fret;
+      }
+
+      function chooseStringTriples(allowSkips) {
+        const strings = [6, 5, 4, 3, 2, 1];
+        const triples = [];
+        if (!allowSkips) {
+          // adjacent only
+          triples.push([6, 5, 4], [5, 4, 3], [4, 3, 2], [3, 2, 1]);
+          return triples;
+        }
+        // all combinations C(6,3)=20
+        for (let i = 0; i < strings.length; i++) {
+          for (let j = i + 1; j < strings.length; j++) {
+            for (let k = j + 1; k < strings.length; k++) {
+              triples.push([strings[i], strings[j], strings[k]]);
+            }
+          }
+        }
+        return triples;
+      }
+
+      // ---------- Search ----------
+      function generateVoicings(rootPC, maxFret, maxSpan, allowSkips) {
+        const chordSet = majorTriadPCs(rootPC);
+        const triples = chooseStringTriples(allowSkips);
+
+        const out = [];
+        const seen = new Set(); // canonical shapes
+
+        for (const triple of triples) {
+          // Build candidates per string (held only: 1..maxFret)
+          const candidates = triple.map(s => {
+            const frets = [];
+            for (let f = 1; f <= maxFret; f++) {
+              const pc = notePCFromStringFret(s, f);
+              if (chordSet.has(pc)) frets.push(f);
+            }
+            return frets;
+          });
+
+          // DFS with pruning
+          // triple[0], triple[1], triple[2]
+          for (const f0 of candidates[0]) {
+            let min0 = f0, max0 = f0;
+            const pc0 = notePCFromStringFret(triple[0], f0);
+
+            for (const f1 of candidates[1]) {
+              const min1 = Math.min(min0, f1);
+              const max1 = Math.max(max0, f1);
+              if (max1 - min1 > maxSpan) continue;
+
+              const pc1 = notePCFromStringFret(triple[1], f1);
+
+              for (const f2 of candidates[2]) {
+                const min2 = Math.min(min1, f2);
+                const max2 = Math.max(max1, f2);
+                if (max2 - min2 > maxSpan) continue;
+
+                const pc2 = notePCFromStringFret(triple[2], f2);
+
+                // must be exactly the triad tones (set equality)
+                const pcs = new Set([pc0, pc1, pc2]);
+                if (pcs.size !== 3) continue; // avoids duplicates; keeps it "1,3,5 all present"
+                // set equality with chordSet:
+                let ok = true;
+                for (const x of chordSet) if (!pcs.has(x)) { ok = false; break; }
+                if (!ok) continue;
+
+                // Canonical 6-string shape array (string 6..1)
+                const shape = [-1, -1, -1, -1, -1, -1];
+                shape[6 - triple[0]] = f0;
+                shape[6 - triple[1]] = f1;
+                shape[6 - triple[2]] = f2;
+
+                const key = shape.join(",");
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                // Useful derived info
+                const midiNotes = [
+                  midiFromStringFret(triple[0], f0),
+                  midiFromStringFret(triple[1], f1),
+                  midiFromStringFret(triple[2], f2),
+                ];
+                const bass = Math.min(...midiNotes);
+                const bassPC = mod12(bass);
+
+                out.push({
+                  triple,
+                  frets: [f0, f1, f2],
+                  shape,
+                  span: max2 - min2,
+                  midiNotes,
+                  bassPC,
+                });
+              }
+            }
+          }
+        }
+
+        // Sort: smaller span first, then lower average fret, then bass lower
+        out.sort((a, b) => {
+          const minA = Math.min(...a.frets);
+          const minB = Math.min(...b.frets);
+          if (minA !== minB) return minA - minB;
+
+          const maxA = Math.max(...a.frets);
+          const maxB = Math.max(...b.frets);
+          if (maxA !== maxB) return maxA - maxB;
+
+          // then smaller span
+          if (a.span !== b.span) return a.span - b.span;
+
+          // then average fret (stable-ish)
+          const avgA = a.frets.reduce((s, x) => s + x, 0) / 3;
+          const avgB = b.frets.reduce((s, x) => s + x, 0) / 3;
+          if (avgA !== avgB) return avgA - avgB;
+
+          // finally, lower bass note
+          return Math.min(...a.midiNotes) - Math.min(...b.midiNotes);
+        });
+
+
+        return out;
+      }
+
+      // ---------- Rendering ----------
+      function chordBox(shape) {
+        // shape is length 6 for strings 6..1, with -1 unused
+        // Make a compact "box" with strings as lines and show fret numbers.
+        // Example line: "6|--3--"
+        // We'll just show "x" for unused, and numbers for used.
+        // Also show min..max fret range.
+        const used = shape.filter(f => f >= 1);
+        const minF = Math.min(...used);
+        const maxF = Math.max(...used);
+
+        const lines = [];
+        for (let s = 6; s >= 1; s--) {
+          const f = shape[6 - s];
+          const mark = (f >= 1) ? String(f).padStart(2, " ") : " x";
+          lines.push(`${s}|${mark}`);
+        }
+        lines.push(` span: ${maxF - minF}  (min ${minF} / max ${maxF})`);
+        return lines.join("\n");
+      }
+
+      function inversionLabel(rootPC, bassPC) {
+        // For major triad: bass can be root, 3rd, 5th
+        const thirdPC = mod12(rootPC + 4);
+        const fifthPC = mod12(rootPC + 7);
+        if (bassPC === rootPC) return "root position";
+        if (bassPC === thirdPC) return "1st inversion (3 in bass)";
+        if (bassPC === fifthPC) return "2nd inversion (5 in bass)";
+        return "—";
+      }
+
+      function render() {
+        const rootPC = parseInt(els.root.value, 10);
+        const maxFret = Math.max(1, Math.min(24, parseInt(els.maxFret.value, 10) || 15));
+        const maxSpan = Math.max(0, Math.min(12, parseInt(els.maxSpan.value, 10) || 4));
+        const allowSkips = !!els.allowSkips.checked;
+
+        els.maxFret.value = String(maxFret);
+        els.maxSpan.value = String(maxSpan);
+
+        const voicings = generateVoicings(rootPC, maxFret, maxSpan, allowSkips);
+
+        const triadPCs = [...majorTriadPCs(rootPC)].sort((a, b) => a - b).map(x => pcName[x]).join(", ");
+        els.count.textContent = `${voicings.length} shapes`;
+        els.info.textContent = `Triad tones: ${pcName[rootPC]} major → { ${triadPCs} } • string triples: ${allowSkips ? "20" : "4"}`;
+
+        els.results.innerHTML = "";
+
+        if (voicings.length === 0) {
+          const div = document.createElement("div");
+          div.className = "warn";
+          div.textContent = "No shapes found with these constraints. Try increasing max fret or span.";
+          els.results.appendChild(div);
+          return;
+        }
+
+        for (const v of voicings) {
+          const btn = document.createElement("button");
+          btn.className = "card";
+          btn.type = "button";
+
+          const title = document.createElement("div");
+          title.className = "topnote";
+          const stringsLabel = v.triple.join("-");
+          title.textContent = `Strings ${stringsLabel} • ${inversionLabel(rootPC, v.bassPC)}`;
+
+          const sub = document.createElement("div");
+          sub.className = "small";
+          sub.textContent = `Frets ${v.frets.join(", ")} • span ${v.span}`;
+
+          const box = document.createElement("div");
+          box.className = "mono";
+          box.textContent = chordBox(v.shape);
+
+          btn.appendChild(title);
+          btn.appendChild(sub);
+          btn.appendChild(box);
+
+          btn.addEventListener("click", () => {
+            arpStep = parseFloat(document.getElementById("arpStep").value) || 0.10;
+            noteLen = parseFloat(document.getElementById("noteLen").value) || 0.50;
+            playVoicing(v.midiNotes, els.ascendingArp.checked, arpStep, noteLen);
+          });
+
+          els.results.appendChild(btn);
+        }
+      }
+
+      // Hook up events
+      ["root", "maxFret", "maxSpan", "allowSkips", "ascendingArp"].forEach(id => {
+        els[id].addEventListener("change", render);
+        els[id].addEventListener("input", render);
+      });
+
+      // Initial render
+      render();
+    })();
+  </script>
+</body>
+
+</html>
