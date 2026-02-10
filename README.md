@@ -1,1 +1,1 @@
-Repository for various websites. More to come!
+Repository for various websites.
