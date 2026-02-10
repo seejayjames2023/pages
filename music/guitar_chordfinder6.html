@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Guitar Chord Finder</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      /* font-weight: 400; */
+      background-color: rgb(51, 51, 51);
+      color: white;
+      user-select: none;
+    }
+
+    body {
+      margin: 16px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    select,
+    input[type="number"] {
+      padding: 4px 4px;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    input[type="number"] {
+      max-width: 60px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      background: #767676;
+      font-size: 18px;
+      font-weight: 600;
+      border: #000000 1px solid;
+      border-radius: 999px;
+    }
+
+    .results {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    button.card {
+      text-align: left;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    button.card:hover {
+      border-color: #aaa;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: larger;
+      white-space: pre;
+    }
+
+    .mono.fretboard {
+      /* change spacing for fretboard */
+      line-height: 0.6;
+      letter-spacing: 0.25em;
+      /* display: inline-block;
+      line-height: 0.9;
+      transform: scaleX(1.12) scaleY(0.92);
+      transform-origin: left top; */
+    }
+
+    .chordTones {
+      font-weight: 500;
+      color: aqua;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #555;
+    }
+
+    .topnote {
+      font-weight: 600;
+      /* margin-bottom: 2px; */
+    }
+
+    .warn {
+      color: #8a2b2b;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- <h2>Major Triads</h2> -->
+
+  <div class="row">
+
+    <label>
+      <!-- Root -->
+      <select id="root">
+        <option value="0" selected>C</option>
+        <option value="1">C#</option>
+        <option value="2">D</option>
+        <option value="3">D#</option>
+        <option value="4">E</option>
+        <option value="5">F</option>
+        <option value="6">F#</option>
+        <option value="7">G</option>
+        <option value="8">G#</option>
+        <option value="9">A</option>
+        <option value="10">A#</option>
+        <option value="11">B</option>
+      </select>
+    </label>
+
+    <label>
+      <!-- Chord type -->
+      <select id="chordType">
+        <option value="0 4 7" selected>Major Triad: 0 4 7</option>
+        <option value="0 3 7">Minor Triad: 0 3 7</option>
+        <option value="0 4 8">Augmented Triad: 0 4 8</option>
+        <option value="0 3 6">Diminished Triad: 0 3 6</option>
+        <option value="0 2 3">0 2 3</option>
+        <option value="0 2 4">0 2 4</option>
+        <option value="0 2 5">0 2 5</option>
+        <option value="0 2 6">0 2 6</option>
+        <option value="0 2 7">0 2 7</option>
+        <!-- <option value="major7">Major 7th</option>
+      <option value="minor7">Minor 7th</option>
+      <option value="dominant7">Dominant 7th</option> -->
+      </select>
+    </label>
+
+    <p class="chordTones" id="info"></p>
+
+
+    <label>
+      Fret limit
+      <input id="maxFret" type="number" min="5" max="15" value="7" />
+    </label>
+
+    <label>
+      Max fret span
+      <input id="maxSpan" type="number" min="0" max="5" value="2" />
+    </label>
+
+    <label>
+      <input id="allowSkips" type="checkbox" checked />
+      Skip strings
+    </label>
+
+    <span class="pill" id="count">—</span>
+  </div>
+
+
+  <div class="row">
+
+
+    <label>
+      RH/LH, Order
+      <select id="stringOrder">
+        <option value="RH16" selected>RH 1..6</option>
+        <option value="RH61">RH 6..1</option>
+        <option value="LH16">LH 1..6</option>
+        <option value="LH61">LH 6..1</option>
+      </select>
+    </label>
+
+    <label>
+      Playback
+      <select id="auditionMode">
+        <option value="up" selected>Arp ↑</option>
+        <option value="down">Arp ↓</option>
+        <option value="chord">Chord</option>
+      </select>
+    </label>
+
+    <label>
+      Sound
+      <select id="soundMode">
+        <option value="triangle" selected>Triangle</option>
+        <option value="sine">Sine</option>
+        <option value="square">Square</option>
+        <option value="sawtooth">Sawtooth</option>
+      </select>
+    </label>
+
+    <label>
+      Arp step (sec)
+      <input id="arpStep" type="number" min="0.1" max="2" step="0.1" value="0.4" />
+    </label>
+
+    <label>
+      Note length (sec)
+      <input id="noteLen" type="number" min="0.1" max="4" step="0.1" value="1.0" />
+    </label>
+
+    <label>
+      <input id="showDots" type="checkbox" checked />
+      Fretboard dots
+    </label>
+
+  </div>
+
+  <div id="results" class="results"></div>
+
+  <script>
+    (() => {
+      // TODO: More chords; "highlight all Ab"; indicate what note is played on each string, including open strings;
+      // those notes could be listed as note names, numbers (relative to root), or interval notation;
+      // Filter/sort by inversion; show more info on hover (e.g. intervals, note names); add custom tuning option;
+      // "capo" option (?) for playback only/transpose? 
+
+
+      // Standard tuning MIDI notes (string 6..1): E2 A2 D3 G3 B3 E4
+      // MIDI: E2=40, A2=45, D3=50, G3=55, B3=59, E4=64
+      const tuningMidi = [40, 45, 50, 55, 59, 64]; // index 0=>string 6, 5=>string 1
+      const pcName = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+      const els = {
+        chordType: document.getElementById("chordType"),
+        root: document.getElementById("root"),
+        maxFret: document.getElementById("maxFret"),
+        maxSpan: document.getElementById("maxSpan"),
+        allowSkips: document.getElementById("allowSkips"),
+        showDots: document.getElementById("showDots"),
+        stringOrder: document.getElementById("stringOrder"),
+        auditionMode: document.getElementById("auditionMode"),
+        soundMode: document.getElementById("soundMode"),
+        results: document.getElementById("results"),
+        count: document.getElementById("count"),
+        info: document.getElementById("info"),
+      };
+
+      // Hook up render events so these fire whenever a control changes. Could be optimized with a debounce if needed.
+      const renderControls = [
+        "chordType",
+        "root",
+        "maxFret",
+        "maxSpan",
+        "allowSkips",
+        "showDots",
+        "stringOrder",
+      ];
+
+      renderControls.forEach(id => {
+        document.getElementById(id).addEventListener("change", render);
+        document.getElementById(id).addEventListener("input", render);
+      });
+
+
+
+      // ---------- Audio (simple, click-to-play) ----------
+      let audioCtx = null;
+      function midiToHz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+      function ensureAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      }
+
+      function playVoicing(midiNotes, myPlayMode, myOscType, myStep, myNoteLength) { // 
+        // console.log("audio opts:", { myPlayMode, myOscType, myStep, myNoteLength });
+
+        ensureAudio();
+        const now = audioCtx.currentTime;
+
+        // steady master gain; note envelopes handle fades
+        const master = audioCtx.createGain();
+        master.gain.setValueAtTime(0.25, now);
+        master.connect(audioCtx.destination);
+
+        let notes;
+        if (myPlayMode === "up") {
+          notes = [...midiNotes].sort((a, b) => a - b);
+        } else if (myPlayMode === "down") {
+          notes = [...midiNotes].sort((a, b) => b - a);
+        } else {
+          // "chord" keeps given order; they'll all start together anyway
+          notes = [...midiNotes];
+        }
+
+        const isChord = (myPlayMode === "chord");
+
+        notes.forEach((m, i) => {
+          const t0 = isChord ? now : (now + i * myStep);
+
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+
+          osc.type = myOscType;
+
+          osc.frequency.setValueAtTime(midiToHz(m), t0);
+
+          const attack = Math.min(0.01, myNoteLength * 0.2);
+
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(0.25, t0 + attack);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + myNoteLength);
+
+          osc.connect(g);
+          g.connect(master);
+
+          osc.start(t0);
+          osc.stop(t0 + myNoteLength + 0.05);
+        });
+      }
+
+
+
+      // ---------- Core chord math ----------
+      function mod12(n) { return ((n % 12) + 12) % 12; }
+
+      function chordFromDropdown(thisRootPC) {
+        const intervals = document.getElementById("chordType").value.split(" ").map(Number);
+        // const pcs = new Set(intervals.map(i => mod12(thisRootPC + i))); // one-liner version of below
+        const pcs = new Set();
+        for (let idx = 0; idx < intervals.length; idx++) {
+          const i = intervals[idx];
+          pcs.add(mod12(thisRootPC + i));
+        }
+        // console.log("chord PCs:", pcs);
+        // console.log("intervals:", intervals);
+        return { pcs, intervals }; // object (two sets)
+      }
+
+      function notePCFromStringFret(stringIndex6to1, fret) {
+        // stringIndex6to1: 6..1, convert to tuningMidi index 0..5
+        const idx = 6 - stringIndex6to1;
+        const midi = tuningMidi[idx] + fret;
+        return mod12(midi);
+      }
+
+      function midiFromStringFret(stringIndex6to1, fret) {
+        const idx = 6 - stringIndex6to1;
+        return tuningMidi[idx] + fret;
+      }
+
+      function chooseStringTriples(allowSkips) { // *** needs update for more strings/chord tones
+        const strings = [6, 5, 4, 3, 2, 1];
+        const triples = [];
+        if (!allowSkips) {
+          // adjacent only
+          triples.push([6, 5, 4], [5, 4, 3], [4, 3, 2], [3, 2, 1]);
+          return triples;
+        }
+        // all combinations C(6,3)=20
+        for (let i = 0; i < strings.length; i++) {
+          for (let j = i + 1; j < strings.length; j++) {
+            for (let k = j + 1; k < strings.length; k++) {
+              triples.push([strings[i], strings[j], strings[k]]);
+            }
+          }
+        }
+        return triples;
+      }
+
+      // This is the main function that generates chord voicings based on the selected root, chord type, and constraints.
+      function generateVoicings(thisRootPC, thisMaxFret, thisMaxSpan, thisAllowSkips) {
+        const chordInfo = chordFromDropdown(thisRootPC);
+        const chordSet = chordInfo.pcs;
+        const intervals = chordInfo.intervals;
+        console.log("chordSet:", chordSet);
+        console.log("intervals:", intervals);
+        // const { pcs: chordSet, intervals } = chordFromDropdown(rootPC); // compact version
+
+        const triples = chooseStringTriples(thisAllowSkips);
+
+        const out = [];
+        const seen = new Set(); // canonical shapes
+
+        for (const triple of triples) { // update
+          // Build candidates per string (held only: 1..maxFret)
+          const candidates = triple.map(s => {
+            const frets = [];
+            for (let f = 1; f <= thisMaxFret; f++) {
+              const pc = notePCFromStringFret(s, f);
+              if (chordSet.has(pc)) frets.push(f);
+            }
+            return frets;
+          });
+
+          // DFS with pruning
+          // triple[0], triple[1], triple[2]
+          for (const f0 of candidates[0]) {
+            let min0 = f0, max0 = f0;
+            const pc0 = notePCFromStringFret(triple[0], f0);
+
+            for (const f1 of candidates[1]) {
+              const min1 = Math.min(min0, f1);
+              const max1 = Math.max(max0, f1);
+              if (max1 - min1 > thisMaxSpan) continue;
+
+              const pc1 = notePCFromStringFret(triple[1], f1);
+
+              for (const f2 of candidates[2]) {
+                const min2 = Math.min(min1, f2);
+                const max2 = Math.max(max1, f2);
+                if (max2 - min2 > thisMaxSpan) continue;
+
+                const pc2 = notePCFromStringFret(triple[2], f2);
+
+                // must be exactly the triad tones (set equality)
+                const pcs = new Set([pc0, pc1, pc2]);
+                if (pcs.size !== 3) continue; // avoids duplicates; keeps it "1,3,5 all present"
+                // *** update if we allow more chord tones
+                // set equality with chordSet:
+                let ok = true;
+                for (const x of chordSet) if (!pcs.has(x)) { ok = false; break; }
+                if (!ok) continue;
+
+                // Canonical 6-string shape array (string 6..1)
+                const shape = [-1, -1, -1, -1, -1, -1];
+                shape[6 - triple[0]] = f0;
+                shape[6 - triple[1]] = f1;
+                shape[6 - triple[2]] = f2;
+
+                const key = shape.join(",");
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                const midiNotes = [
+                  midiFromStringFret(triple[0], f0),
+                  midiFromStringFret(triple[1], f1),
+                  midiFromStringFret(triple[2], f2),
+                ];
+
+                const bassMidi = Math.min(...midiNotes);
+                const idx = midiNotes.indexOf(bassMidi);
+
+                const bassString = triple[idx];
+                const bassFret = [f0, f1, f2][idx];
+
+                // absolute PC in the SAME system as pc0/pc1/pc2
+                const bassPCAbs = notePCFromStringFret(bassString, bassFret);
+                // relative for inversion logic
+                const bassRel = mod12(bassPCAbs - thisRootPC);
+                const inversion = intervals.indexOf(bassRel); // 0,1,2,3
+                const inversionLabel = (inversion === 0) ? "root" : (inversion === 1) ? "1st inv" : (inversion === 2) ? "2nd inv" : (inversion === 3) ? "3rd inv" : "—";
+
+                // console.log({
+                //   thisRootPC,
+                //   pcs: [...pcs].sort((a, b) => a - b),
+                //   bassPCAbs,
+                //   bassRel,
+                //   frets: [f0, f1, f2],
+                //   triple
+                // });
+
+
+                out.push({
+                  triple,
+                  frets: [f0, f1, f2],
+                  shape,
+                  span: max2 - min2,
+                  midiNotes,
+                  bassPC: bassPCAbs,
+                  bassRel,
+                  inversion: inversion,
+                  inversionLabel: inversionLabel,
+                });
+              }
+            }
+          }
+        }
+
+        // Sorting criteria:
+        out.sort((a, b) => {
+          const minA = Math.min(...a.frets);
+          const minB = Math.min(...b.frets);
+          if (minA !== minB) return minA - minB;
+
+          const maxA = Math.max(...a.frets);
+          const maxB = Math.max(...b.frets);
+          if (maxA !== maxB) return maxA - maxB;
+
+          // then smaller span
+          if (a.span !== b.span) return a.span - b.span;
+
+          // then average fret (stable-ish)
+          const avgA = a.frets.reduce((s, x) => s + x, 0) / 3;
+          const avgB = b.frets.reduce((s, x) => s + x, 0) / 3;
+          if (avgA !== avgB) return avgA - avgB;
+
+          // finally, lower bass note
+          return Math.min(...a.midiNotes) - Math.min(...b.midiNotes);
+        });
+
+
+        return out;
+      }
+
+      function chordBox(shape) {
+        const marker = "●";     // fingered note
+        const blank = "-";      // normal fret background
+        const dot = "·";        // dot-background fret
+        const doubleDot = ":";  // 12th fret (double dot)
+
+        // showDots = document.getElementById("showDots")?.checked;
+
+        const maxFretShown =
+          Math.min(15, parseInt(document.getElementById("maxFret").value, 10) || 15);
+
+        const dotFrets = new Set([3, 5, 7, 9, 15]);
+
+        // Can optimize below: RH versus LH, string order, smarter loops
+        const lines = [];
+
+        // Blank line
+        lines.push("");
+
+        // Fret numbering header (mod 10)
+        let header = "";
+        if (stringOrder.value === "RH16" || stringOrder.value === "RH61") {
+          //header += " "; // align with 1-based fret numbers
+          for (let f = 1; f <= maxFretShown; f++) header += String(f % 10);
+        } else if (stringOrder.value === "LH61" || stringOrder.value === "LH16") {
+          for (let f = maxFretShown; f >= 1; f--) header += String(f % 10);
+          //header += " "; // align with 1-based fret numbers
+        }
+
+        lines.push(header);
+
+        // Blank line
+        lines.push("");
+
+        // Strings ordering for display: RH, LH, normal, reverse for each
+        let loopStringOrder = [];
+        if (stringOrder.value === "RH61" || stringOrder.value === "LH61") loopStringOrder = [6, 5, 4, 3, 2, 1];
+        else if (stringOrder.value === "RH16" || stringOrder.value === "LH16") loopStringOrder = [1, 2, 3, 4, 5, 6];
+
+        for (const s of loopStringOrder) {
+          const fret = shape[6 - s];
+          let row = "";
+
+          // RH
+          if (stringOrder.value === "RH61" || stringOrder.value === "RH16") {
+            for (let col = 1; col <= maxFretShown; col++) {
+              let bg = blank;
+              if (showDots.checked) {
+                if (col === 12) bg = doubleDot;
+                else if (dotFrets.has(col)) bg = dot;
+              }
+              row += (fret === col) ? marker : bg;
+            }
+          } else if (stringOrder.value === "LH61" || stringOrder.value === "LH16") {
+            // LH (mirror frets)
+            for (let col = maxFretShown; col >= 1; col--) {
+              let bg = blank;
+              if (showDots.checked) {
+                if (col === 12) bg = doubleDot;
+                else if (dotFrets.has(col)) bg = dot;
+              }
+              row += (fret === col) ? marker : bg;
+            }
+          }
+
+          lines.push(row);
+        }
+
+        return lines.join("\n");
+      }
+
+      function render() {
+        // console.log("render " + els.allowSkips.checked + ", stringOrder: " + stringOrder.value);
+        // Pitch Class
+        const thisRootPC = parseInt(els.root.value, 10);
+
+        // Max fret handler (allows 0)
+        const rawFret = parseInt(els.maxFret.value, 10);
+        maxFret = Math.max(1, Math.min(24, Number.isFinite(rawFret) ? rawFret : 15));
+        els.maxFret.value = String(maxFret);
+
+        // Max span handler (allows 0)
+        const rawSpan = parseInt(els.maxSpan.value, 10);
+        maxSpan = Math.max(0, Math.min(12, Number.isFinite(rawSpan) ? rawSpan : 4));
+        els.maxSpan.value = String(maxSpan);
+
+        const allowSkips = !!els.allowSkips.checked;
+
+        const voicings = generateVoicings(thisRootPC, maxFret, maxSpan, allowSkips);
+        els.count.textContent = `${voicings.length} result${voicings.length === 1 ? "" : "s"}`;
+
+        // Fix with new chordFromDropdown return value
+        const chordInfo = chordFromDropdown(thisRootPC);
+        const chordSet = chordInfo.pcs;
+        const triadPCs = [...chordSet].sort((a, b) => a - b).map(x => pcName[x]).join(" ");
+        els.info.textContent = `${triadPCs}`;
+
+        els.results.innerHTML = "";
+
+        if (voicings.length === 0) {
+          const div = document.createElement("div");
+          div.className = "warn";
+          div.textContent = "No shapes found with these constraints. Try increasing max fret or span, allowing skips, or changing the root note.";
+          els.results.appendChild(div);
+          return;
+        }
+
+        for (const v of voicings) {
+          const btn = document.createElement("button");
+          btn.className = "card";
+          btn.type = "button";
+
+          const title = document.createElement("div");
+          title.className = "topnote";
+          const stringsLabel = v.triple.join("-");
+          title.textContent = `${v.inversionLabel}`;
+          // title.textContent = `Strings ${stringsLabel} • ${v.inversionLabel}`;
+
+          // const sub = document.createElement("div");
+          // sub.className = "small";
+          // sub.textContent = `Frets ${v.frets.join(", ")} • span ${v.span}`;
+
+          const box = document.createElement("div");
+          box.className = "mono fretboard";
+          box.innerHTML = chordBox(v.shape);
+
+          btn.appendChild(title);
+          // btn.appendChild(sub);
+          btn.appendChild(box);
+
+          btn.addEventListener("click", () => {
+            const myPlayMode = document.getElementById("auditionMode").value; // "up" | "down" | "chord"
+            const myOscType = document.getElementById("soundMode").value;
+            const myStep = parseFloat(arpStep.value); // time between notes in arpeggio
+            const myNoteLength = parseFloat(noteLen.value); // duration of each note
+            playVoicing(v.midiNotes, myPlayMode, myOscType, myStep, myNoteLength);
+          });
+
+          els.results.appendChild(btn);
+        }
+      }
+
+      // function getAudioSettings() {
+      //   return {
+      //     mode: document.getElementById("auditionMode").value, // "up" | "down" | "chord"
+      //     osc: document.getElementById("soundMode").value,
+      //     step: parseFloat(arpStep.value),
+      //     len: parseFloat(noteLen.value),
+      //   };
+      // }
+
+
+      // Initial render
+      render();
+    })();
+  </script>
+</body>
+
+</html>
