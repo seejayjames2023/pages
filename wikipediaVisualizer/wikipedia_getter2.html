@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Wikipedia API Test</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 10px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .outputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    .outputs>div {
+      min-width: 0;
+    }
+
+    .panel {
+      border: 1px solid #ccc;
+      padding: 20px;
+      /* tweak this value based on size of the top UI elements */
+      height: calc(90vh - 180px);
+      overflow-y: auto;
+      width: 90%;
+    }
+
+    #jsonOutput,
+    #htmlOutput {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .outputs {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h3>Wikipedia Article Loader</h3>
+  <label>
+    <input type="checkbox" id="browseMode" checked>
+    Load linked articles in this viewer
+  </label>
+
+  <button onclick="visualizeStructure(structure)">
+    Visualize
+  </button>
+
+  <form class="controls" onsubmit="event.preventDefault(); loadArticle();">
+    <input id="articleTitle" type="text" value="Acoustics" placeholder="Wikipedia article title">
+
+    <button type="submit">Load</button>
+
+  </form>
+
+  <div class="outputs">
+
+    <div>
+      <h3>Rendered Article</h3>
+      <div id="output" class="panel"></div>
+    </div>
+
+    <div>
+      <h3>JSON</h3>
+      <pre id="jsonOutput" class="panel"></pre>
+    </div>
+
+    <div>
+      <h3>Structure</h3>
+      <pre id="structuredOutput" class="panel"></pre>
+    </div>
+
+    <div>
+      <h3>Raw HTML</h3>
+      <pre id="htmlOutput" class="panel" style="display:none"></pre>
+    </div>
+
+  </div>
+
+  <script src="structure-visualizer.js"></script>
+  <script>
+    let sourceURL = "https://en.wikipedia.org/wiki/"; // will append title to this base URL for the source link in the structured output
+
+    let structure = createEmptyStructure();
+
+    function createEmptyStructure() {
+      return {
+        headings: [],
+        paragraphs: [],
+        listItems: [],
+        blockquotes: [],
+        figures: [],
+        tables: [],
+        links: []
+      };
+    }
+
+    // Handle clicks on links in the rendered article. They will load the linked article in this viewer if "Browse Mode" is enabled.
+    const output = document.getElementById("output");
+
+    output.addEventListener("click", event => {
+      const link = event.target.closest("a");
+      if (!link) return;
+      // Ignore linked media, otherwise clicking may try and load it as an "article", which doesn't exist. (Images at least do this behavior.)
+      if (event.target.closest("img, video, audio")) return;
+
+      const browseMode = document.getElementById("browseMode").checked;
+      if (!browseMode) return;
+
+      const url = new URL(link.href);
+      if (
+        url.hostname === "en.wikipedia.org" &&
+        url.pathname.startsWith("/wiki/")
+      ) {
+        event.preventDefault();
+        const articleName = decodeURIComponent(
+          url.pathname.replace("/wiki/", "")
+        ).replaceAll("_", " ");
+        console.log("Loading article:", articleName);
+        document.getElementById("articleTitle").value = articleName;
+        loadArticle();
+      }
+    });
+
+    // Main function to load the article, parse it, and display the outputs
+    async function loadArticle() {
+
+      const title = document.getElementById("articleTitle").value.trim();
+
+      const output = document.getElementById("output");
+      const jsonOutput = document.getElementById("jsonOutput");
+      const structuredOutput = document.getElementById("structuredOutput");
+      const htmlOutput = document.getElementById("htmlOutput");
+
+      if (!title) return;
+
+      // Reset the structure object for each new article load
+      structure = createEmptyStructure();
+
+      output.textContent = "Loading...";
+      jsonOutput.textContent = "Loading...";
+      structuredOutput.textContent = "Loading...";
+      htmlOutput.textContent = "Loading...";
+
+      const encodedTitle = encodeURIComponent(title);
+      sourceURL = `https://en.wikipedia.org/wiki/${encodedTitle}`;
+
+      const url =
+        `https://en.wikipedia.org/w/rest.php/v1/page/${encodedTitle}/html`;
+
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.log("HTTP error:", response.status);
+        const message = response.status === 404
+          ? "Error: Article not found."
+          : `Error: HTTP error ${response.status}`;
+        output.textContent = message;
+        jsonOutput.textContent = message;
+        structuredOutput.textContent = message;
+        htmlOutput.textContent = message;
+        return;
+      }
+
+      const html = await response.text();
+      // console.log("Fetched HTML:", html);
+
+      // Show the untouched HTML returned by Wikipedia
+      htmlOutput.textContent = html; // textContent, not innerHTML, to avoid rendering HTML and executing scripts
+
+      const baseURL = "https://en.wikipedia.org/wiki/"; // Base URL for resolving relative links
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+
+      // Extract elements for JSON output
+      const blocks = [];
+
+      let paragraphIndex = 0;
+      let headingIndex = 0;
+      let listItemIndex = 0;
+      let blockquoteIndex = 0;
+      let figureIndex = 0;
+      let tableIndex = 0;
+
+      // NOTE: Nested elements can occur in lists, blockquotes, and tables.
+      // The current implementation flattens the structure and only captures the text content of each element. 
+      // If you need to preserve the hierarchy, you may need to implement a recursive function to traverse the DOM tree.
+      // The nesting could also cause duplicate text content to be captured in the JSON output.
+
+      // For Wikipedia specifically, we don't want the content of the "References" section, so we can stop parsing when we reach that heading.
+      // We're assuming that the "References" section is an h2 with the text "References".
+      // const referencesHeading = Array.from(doc.querySelectorAll("h2")).find(h2 => h2.textContent.trim() === "References");
+      // let referencesReached = false;
+
+      // Can add examples here, the first one that happens will stop the parsing. Not all will appear on every wiki page.
+      const stopSections = [
+        "See also",
+        "Notes",
+        "References",
+        "Further reading",
+        "External links"
+      ];
+
+      const elements = doc.querySelectorAll(
+        "h1, h2, h3, h4, h5, h6, p, li, blockquote, figure, table"
+      );
+
+      for (const el of elements) {
+
+        const text = el.textContent.trim();
+        if (!text) continue;
+        if (el.tagName === "H2" && stopSections.includes(text)) {
+          console.log("Reached '" + text + "' section, stopping parsing.");
+          break;
+        }
+
+        // Build a unique ID for each block, include the type of block in the ID for easier identification
+        // Each type of block has its own index to ensure uniqueness across the entire document
+        let id = "";
+        let type = "";
+
+        switch (el.tagName) {
+
+          case "P":
+            id = `src-p-${paragraphIndex++}`;
+            type = "paragraph";
+            break;
+
+          case "H1":
+          case "H2":
+          case "H3":
+          case "H4":
+          case "H5":
+          case "H6":
+            id = `src-h-${headingIndex++}`;
+            type = `heading ${el.tagName.substring(1)}`;
+            break;
+
+          case "LI":
+            id = `src-li-${listItemIndex++}`;
+            type = "list-item";
+            break;
+
+          case "BLOCKQUOTE":
+            id = `src-bq-${blockquoteIndex++}`;
+            type = "blockquote";
+            break;
+
+          case "FIGURE":
+            id = `src-fig-${figureIndex++}`;
+            type = "figure";
+            break;
+
+          case "TABLE":
+            id = `src-table-${tableIndex++}`;
+            type = "table";
+            break;
+
+          default:
+            continue;
+        }
+
+        // Extract links within the block
+        const links = Array.from(el.querySelectorAll("a[href]")).map(a => ({
+          text: a.textContent.trim(),
+          href: new URL(a.getAttribute("href"), baseURL).href
+        }));
+
+        // For tables, we can use the caption or the first header cell as the label for the table in the JSON output
+        // otherwise we get a bunch of the structured data from the table itself
+        let blockText = text;
+
+        if (type === "table") {
+          blockText =
+            el.querySelector("caption")?.textContent.trim() ||
+            el.querySelector("th")?.textContent.trim() ||
+            "Table";
+        }
+
+        const block = {
+          id,
+          type,
+          text: blockText,
+          links
+        };
+
+        blocks.push(block);
+        el.id = id;
+
+      }; // ← END parsing pass
+
+
+
+      // Build JSON after parsing all blocks
+      const sourceJSON = {
+        title: title,
+        sourceURL: `https://en.wikipedia.org/wiki/${encodedTitle}`,
+        blocks: blocks
+      };
+
+      jsonOutput.textContent = JSON.stringify(sourceJSON, null, 2);
+
+      // Store the structured data in global structure objects (by type) for visualization
+
+      // For links we can use a Set to avoid duplicates, since the same link may appear in multiple blocks
+      const seenLinks = new Set();
+
+      // For other types, we may or may not want to allow duplicates
+
+      sourceJSON.blocks.forEach(block => {
+
+        if (block.type.startsWith("heading")) {
+          structure.headings.push({
+            id: `heading-${structure.headings.length}`,
+            label: block.text,
+            sourceRef: block.id,
+            type: "section",
+            importance: 1.0
+          });
+        }
+
+        else if (block.type === "paragraph") {
+          structure.paragraphs.push({
+            id: `paragraph-${structure.paragraphs.length}`,
+            label: block.text,
+            sourceRef: block.id,
+            type: "paragraph",
+            importance: 0.5
+          });
+        }
+
+        else if (block.type === "list-item") {
+          structure.listItems.push({
+            id: `list-item-${structure.listItems.length}`,
+            label: block.text,
+            sourceRef: block.id,
+            type: "list-item",
+            importance: 0.5
+          });
+        }
+
+        else if (block.type === "blockquote") {
+          structure.blockquotes.push({
+            id: `blockquote-${structure.blockquotes.length}`,
+            label: block.text,
+            sourceRef: block.id,
+            type: "blockquote",
+            importance: 0.5
+          });
+        }
+
+        else if (block.type === "figure") {
+          const img = doc.getElementById(block.id)?.querySelector("img");
+          const imageSource = img
+            ? new URL(img.getAttribute("src"), baseURL).href
+            : null;
+
+          structure.figures.push({
+            id: `figure-${structure.figures.length}`,
+            label: block.text,
+            sourceRef: block.id,
+            imageSrc: imageSource,
+            imagePageURL: block.links[0]?.href || null,
+            type: "figure",
+            importance: 0.5
+          });
+        }
+
+        else if (block.type === "table") {
+          structure.tables.push({
+            id: `table-${structure.tables.length}`,
+            label: block.text, // use the table label or caption for the structured output (handled above)
+            sourceRef: block.id,
+            type: "table",
+            importance: 0.5
+          });
+        }
+
+        block.links.forEach(link => {
+          if (!seenLinks.has(link.href)) {
+            seenLinks.add(link.href);
+
+            structure.links.push({
+              id: `link-${structure.links.length}`,
+              label: link.text,
+              href: link.href,
+              sourceRef: block.id,
+              type: "link",
+              importance: 0.5
+            });
+          }
+        });
+
+      });
+
+      // structuredOutput.textContent = JSON.stringify(structure, null, 2); // simple version
+
+      structuredOutput.textContent = `
+SOURCE URL: ${sourceURL}
+
+HEADINGS (${structure.headings.length})
+PARAGRAPHS (${structure.paragraphs.length})
+LIST ITEMS (${structure.listItems.length})
+BLOCKQUOTES (${structure.blockquotes.length})
+FIGURES (${structure.figures.length})
+TABLES (${structure.tables.length})
+LINKS (${structure.links.length})
+
+------------------------------------------------
+
+HEADINGS (${structure.headings.length})
+${JSON.stringify(structure.headings, null, 2)}
+
+PARAGRAPHS (${structure.paragraphs.length})
+${JSON.stringify(structure.paragraphs, null, 2)}
+
+LIST ITEMS (${structure.listItems.length})
+${JSON.stringify(structure.listItems, null, 2)}
+
+BLOCKQUOTES (${structure.blockquotes.length})
+${JSON.stringify(structure.blockquotes, null, 2)}
+
+FIGURES (${structure.figures.length})
+${JSON.stringify(structure.figures, null, 2)}
+
+TABLES (${structure.tables.length})
+${JSON.stringify(structure.tables, null, 2)}
+
+LINKS (${structure.links.length})
+${JSON.stringify(structure.links, null, 2)}
+`;
+
+
+      // console.log("Structure headings: ", structure.headings);
+      // console.log("Structure paragraphs: ", structure.paragraphs);
+      // console.log("Structure listItems: ", structure.listItems);
+      // console.log("Structure blockquotes: ", structure.blockquotes);
+      // console.log("Structure figures: ", structure.figures);
+      // console.log("Structure tables: ", structure.tables);
+      // console.log("Structure links: ", structure.links);
+
+      // visualizeStructure(structure); // visualizer! Button for now (not auto-launch)
+
+      // Render original article HTML
+      // Fix links: can do the "open in Wikipedia" or "open in this parser"
+      doc.querySelectorAll("a[href]").forEach(el => {
+
+        const resolvedURL = new URL(el.getAttribute("href"), baseURL);
+        el.href = resolvedURL.href;
+        el.target = "_blank";
+        el.rel = "noopener";
+
+      });
+
+
+
+
+      // Fix images
+      doc.querySelectorAll("img[src]").forEach(el => {
+        el.src = new URL(el.getAttribute("src"), baseURL).href;
+      });
+
+      // Fix srcset
+      doc.querySelectorAll("img[srcset]").forEach(img => {
+
+        const srcset = img.getAttribute("srcset");
+
+        img.srcset = srcset
+          .split(",")
+          .map(item => {
+            const parts = item.trim().split(/\s+/);
+            const url = new URL(parts[0], baseURL).href;
+            return [url, ...parts.slice(1)].join(" ");
+          })
+          .join(", ");
+      });
+
+      output.innerHTML = doc.body.innerHTML;
+
+    }
+
+  </script>
+
+</body>
+
+</html>
